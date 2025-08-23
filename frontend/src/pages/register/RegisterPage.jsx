@@ -90,16 +90,16 @@ export default function Register() {
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-center justify-center flex-1 px-4 sm:px-6 lg:px-8"
+        className="flex items-center justify-center flex-1 px-4 sm:px-6 lg:px-8 py-8 sm:py-12"
       >
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md space-y-6 sm:space-y-8">
           <div className="text-center">
-            <Logo className="mx-auto mb-8" />
+            <Logo className="mx-auto mb-6 sm:mb-8" />
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-3xl font-bold text-gray-900"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900"
             >
               Create a New Account
             </motion.h2>
@@ -107,15 +107,15 @@ export default function Register() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mt-2 text-sm text-gray-600"
+              className="mt-2 text-sm sm:text-base text-gray-600"
             >
               Join HireTab to explore the best job opportunities
             </motion.p>
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">
-              <div className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
+              <div className="space-y-3 sm:space-y-4">
 
                 <FormField
                   control={form.control}

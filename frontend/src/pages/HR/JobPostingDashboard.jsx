@@ -410,21 +410,23 @@ export default function JobPostingDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 font-['Inter',system-ui,sans-serif]">
       <div className="bg-gray-50 min-h-screen">
-        <DashboardHeader
-          jobName={jobName}
-          candidatesCount={candidates.length}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          showFilterPanel={showFilterPanel}
-          setShowFilterPanel={setShowFilterPanel}
-          filtersCount={filters.length}
-          sortConfig={sortConfig}
-          setSortConfig={setSortConfig}
-          selectedCandidatesCount={selectedCandidates.size}
-          onSendEmail={handleSendEmail}
-        />
+        <div className="px-3 sm:px-4 lg:px-6">
+          <DashboardHeader
+            jobName={jobName}
+            candidatesCount={candidates.length}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            showFilterPanel={showFilterPanel}
+            setShowFilterPanel={setShowFilterPanel}
+            filtersCount={filters.length}
+            sortConfig={sortConfig}
+            setSortConfig={setSortConfig}
+            selectedCandidatesCount={selectedCandidates.size}
+            onSendEmail={handleSendEmail}
+          />
+        </div>
 
-        <div className="px-6 py-6">
+        <div className="px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
           <BulkActionsBar
             selectedCount={selectedCandidates.size}
             availableTransitions={availableTransitions}

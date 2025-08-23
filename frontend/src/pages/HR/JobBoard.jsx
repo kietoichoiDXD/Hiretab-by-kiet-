@@ -164,30 +164,28 @@ export default function JobBoard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Modern Header */}
+            {/* Header - Mobile Responsive */}
       <div className="sticky top-0 z-20 bg-white border-b border-gray-200">
-        <div className="px-6 py-4">
+        <div className="px-4 sm:px-6 py-4">
           {/* Title Section */}
           <div className="mb-4">
-            <h1 className="mb-1 text-2xl font-bold text-gray-900">Job Board</h1>
-            <p className="text-gray-600">
+            <h1 className="mb-1 text-xl sm:text-2xl font-bold text-gray-900">Job Board</h1>
+            <p className="text-sm sm:text-base text-gray-600">
               Effortlessly manage, filter, and review all your job postings in one place.
             </p>
           </div>
 
           {/* Search and Filters */}
-          <div className="flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center">
-            <div className="flex flex-col items-start flex-1 w-full gap-3 sm:flex-row sm:items-center lg:w-auto">
-              {/* Enhanced Search Input */}
-              <div className="relative flex-grow min-w-[250px] max-w-sm">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                  <Search className="w-5 h-5 text-gray-400" />
-                </div>
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Search jobs, descriptions..."
-                  className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-500"
+                  placeholder="Search jobs by title or description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -267,30 +265,30 @@ export default function JobBoard() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="px-6 py-8">
+      {/* Main Content - Mobile Responsive */}
+      <div className="px-4 sm:px-6 py-6 sm:py-8">
         {filteredJobs.length === 0 ? (
-          <div className="p-12 text-center bg-white border border-gray-200 rounded-lg shadow-sm">
-            <div className="flex items-center justify-center w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full">
-              <Briefcase className="w-10 h-10 text-gray-400" />
+          <div className="p-8 sm:p-12 text-center bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-gray-100 rounded-full">
+              <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">No jobs found</h3>
-            <p className="mb-6 text-gray-600">No jobs match your current search criteria</p>
+            <h3 className="mb-2 text-lg sm:text-xl font-semibold text-gray-900">No jobs found</h3>
+            <p className="mb-4 sm:mb-6 text-sm sm:text-base text-gray-600">No jobs match your current search criteria</p>
             <button
               onClick={() => {
                 setSearchTerm("")
                 setLocation("All Locations")
                 setStatus("All Statuses")
               }}
-              className="px-4 py-2 font-medium text-blue-600 transition-colors duration-200 hover:text-blue-700"
+              className="px-4 py-2 font-medium text-sm sm:text-base text-blue-600 transition-colors duration-200 hover:text-blue-700"
             >
               Clear all filters
             </button>
           </div>
         ) : (
           <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
-            {/* Table Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            {/* Desktop Table Header - Hidden on mobile */}
+            <div className="hidden lg:block px-6 py-4 border-b border-gray-200 bg-gray-50">
               <div className="grid grid-cols-12 gap-6 text-sm font-semibold text-gray-700">
                 <div className="col-span-3">Job Title</div>
                 <div className="col-span-1">Status</div>

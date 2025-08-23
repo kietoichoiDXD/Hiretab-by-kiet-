@@ -228,25 +228,25 @@ Do not include any HTML or CSS, only pure Markdown.`
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
-                <DialogHeader className="border-b border-gray-100 pb-6">
-                    <DialogTitle className="text-2xl font-bold text-gray-800">
+            <DialogContent className="max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
+                <DialogHeader className="border-b border-gray-100 pb-4 sm:pb-6">
+                    <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800">
                         Create New Job Posting
                     </DialogTitle>
-                    <DialogDescription className="text-gray-600 mt-2">
+                    <DialogDescription className="text-sm sm:text-base text-gray-600 mt-2">
                         Fill out the information below to create a professional job posting. All required fields must be completed.
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-8 py-6">
+                <div className="space-y-6 sm:space-y-8 py-4 sm:py-6">
                     {/* Basic Information Section */}
-                    <div className="bg-gray-50 p-6 rounded-lg">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <div className="w-2 h-6 bg-blue-500 rounded mr-3"></div>
+                    <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+                            <div className="w-2 h-4 sm:h-6 bg-blue-500 rounded mr-2 sm:mr-3"></div>
                             Basic Information
                         </h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                             {/* Industry Selection */}
                             <div>
                                 <select

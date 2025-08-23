@@ -512,8 +512,8 @@ export default function CreateResume() {
                 />
             )}
 
-            <div className="flex h-[calc(100vh-64px)]">
-                <div className="flex-1 p-6">
+            <div className="flex flex-col lg:flex-row min-h-[calc(100vh-64px)]">
+                <div className="flex-1 p-4 lg:p-6 overflow-y-auto">
                     <ResumePreview
                         resumeData={resumeData}
                         template={selectedTemplate}
@@ -527,9 +527,9 @@ export default function CreateResume() {
                     />
                 </div>
 
-                {/* Updated panel width from w-80 (320px) to w-[440px] (320px + 120px = 440px, but using 350px for better proportion) */}
+                {/* Responsive panel - full width on mobile, fixed width on desktop */}
                 {activePanel === "personalInfo" && (
-                    <div className="w-[420px] bg-white border-l border-gray-200">
+                    <div className="w-full lg:w-[420px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 max-h-[50vh] lg:max-h-full overflow-y-auto">
                         <PersonalInfoPanel
                             personalInfo={resumeData.personalInfo}
                             onUpdatePersonalInfo={updatePersonalInfo}
@@ -539,7 +539,7 @@ export default function CreateResume() {
                 )}
 
                 {activePanel === "experience" && (
-                    <div className="w-[420px] bg-white border-l border-gray-200">
+                    <div className="w-full lg:w-[420px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 max-h-[50vh] lg:max-h-full overflow-y-auto">
                         <ExperiencePanel
                             experience={resumeData.experience}
                             onUpdateExperience={updateExperience}
@@ -549,7 +549,7 @@ export default function CreateResume() {
                 )}
 
                 {activePanel === "education" && (
-                    <div className="w-[420px] bg-white border-l border-gray-200">
+                    <div className="w-full lg:w-[420px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 max-h-[50vh] lg:max-h-full overflow-y-auto">
                         <EducationPanel
                             education={resumeData.education}
                             onUpdateEducation={updateEducation}
@@ -559,7 +559,7 @@ export default function CreateResume() {
                 )}
 
                 {activePanel === "skills" && (
-                    <div className="w-[420px] bg-white border-l border-gray-200">
+                    <div className="w-full lg:w-[420px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 max-h-[50vh] lg:max-h-full overflow-y-auto">
                         <SkillsPanel
                             skills={resumeData.skills}
                             onUpdateSkills={updateSkills}
@@ -569,7 +569,7 @@ export default function CreateResume() {
                 )}
 
                 {activePanel === "certifications" && (
-                    <div className="w-[420px] bg-white border-l border-gray-200">
+                    <div className="w-full lg:w-[420px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 max-h-[50vh] lg:max-h-full overflow-y-auto">
                         <CertificationsPanel
                             certifications={resumeData.certifications}
                             onUpdateCertifications={updateCertifications}
@@ -579,7 +579,7 @@ export default function CreateResume() {
                 )}
 
                 {activePanel === "projects" && (
-                    <div className="w-[420px] bg-white border-l border-gray-200">
+                    <div className="w-full lg:w-[420px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 max-h-[50vh] lg:max-h-full overflow-y-auto">
                         <ProjectsPanel
                             projects={resumeData.projects}
                             onUpdateProjects={updateProjects}

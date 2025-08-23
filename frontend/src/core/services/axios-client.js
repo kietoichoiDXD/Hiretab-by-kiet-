@@ -32,6 +32,7 @@ const axiosClient = axios.create({
 // Request interceptor
 axiosClient.interceptors.request.use(
   config => {
+    console.log('Making request to:', config.baseURL + config.url);
     const token = getAccessTokenFromLS()
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
@@ -39,6 +40,7 @@ axiosClient.interceptors.request.use(
     return config
   },
   error => {
+    console.error('Request error:', error);
     return Promise.reject(error)
   }
 )
@@ -46,9 +48,11 @@ axiosClient.interceptors.request.use(
 // Response interceptor
 axiosClient.interceptors.response.use(
   response => {
+    console.log('Response received:', response);
     return response.data
   },
   async error => {
+    console.error('Response error:', error);
     const originalRequest = error.config
 
     if (

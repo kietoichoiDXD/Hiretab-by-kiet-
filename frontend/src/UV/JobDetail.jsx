@@ -64,78 +64,78 @@ export default function JobDetail() {
   return (
     <>
       <Header />
-      <div className="flex flex-col min-h-screen mt-24">
+      <div className="flex flex-col min-h-screen mt-16 sm:mt-20 lg:mt-24">
         {/* Hero section with blue overlay */}
         <div className="relative">
           <div className="absolute inset-0 z-10 bg-blue-600/80" />
           <div
-            className="relative bg-cover bg-center h-[400px]"
+            className="relative bg-cover bg-center h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px]"
             style={{ backgroundImage: "url('https://github.com/meishenry/HireNova/blob/main/%E1%BB%A8ng%20Vi%C3%AAn/M%C3%B4%20t%E1%BA%A3%20c%C3%B4ng%20vi%E1%BB%87c%20khi%20ch%C6%B0a%20apply%20(%E1%BB%A9ng%20vi%C3%AAn)/images/main-image.jpg?raw=true')" }}
           >
-            <div className="relative z-20 p-6">
-              <button className="flex items-center text-white transition hover:text-blue-100"
+            <div className="relative z-20 p-4 sm:p-6">
+              <button className="flex items-center text-white transition hover:text-blue-100 text-sm sm:text-base"
                 onClick={() => navigate(-1)}
               >
-                <ArrowLeft className="w-5 h-5 mr-2" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 <span>Open Positions</span>
               </button>
             </div>
-            <div className="relative z-20 flex flex-col justify-center h-full px-6 pb-16">
-              <h1 className="mb-6 text-4xl font-bold text-white md:text-5xl">{job.title}</h1>
-              <div className="text-lg text-white">{job.location} | Full-Time</div>
+            <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-6 pb-12 sm:pb-16">
+              <h1 className="mb-4 sm:mb-6 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">{job.title}</h1>
+              <div className="text-base sm:text-lg text-white">{job.location} | Full-Time</div>
             </div>
           </div>
         </div>
 
         {/* Company Information */}
-        <div className="py-12 bg-gray-50">
-          <div className="container max-w-4xl px-6 mx-auto">
-            <h2 className="mb-6 text-2xl font-bold">About GDGoC - DUT</h2>
-            <p className="mb-4 text-gray-700">
+        <div className="py-8 sm:py-10 lg:py-12 bg-gray-50">
+          <div className="container max-w-4xl px-4 sm:px-6 mx-auto">
+            <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold">About GDGoC - DUT</h2>
+            <p className="mb-3 sm:mb-4 text-sm sm:text-base text-gray-700 leading-relaxed">
               GDGoC - DUT (Google Developer Group of Danang University of Science and Technology) is a vibrant tech community of students passionate about programming, design, and software development. With a strong spirit of learning and sharing, GDGoC connects young talents within and beyond the university to explore new technologies and build meaningful projects together.
             </p>
-            <p className="mb-4 text-gray-700">
+            <p className="mb-3 sm:mb-4 text-sm sm:text-base text-gray-700 leading-relaxed">
               We believe that every student has the potential to become a great engineer. GDGoC offers hands-on workshops, inspiring talk shows, hackathons, and mentorship programs to help members sharpen their skills, grow their networks, and gain a clearer career direction.
             </p>
-            <p className="text-gray-700">
+            <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
               Led by dedicated and experienced members, GDGoC continuously strives to innovate and grow. Whether you're a first-year student or already experienced, we welcome you to join GDGoC — to learn, grow, and contribute to a stronger tech community at DUT.
             </p>
           </div>
         </div>
 
         {/* Job Details */}
-        <div className="container max-w-4xl px-6 py-12 mx-auto">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div className="md:col-span-2">
-              <h2 className="mb-4 text-2xl font-bold">Job Description</h2>
-              <p className="mb-8 text-gray-700">{job.description}</p>
+        <div className="container max-w-4xl px-4 sm:px-6 py-8 sm:py-10 lg:py-12 mx-auto">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <h2 className="mb-3 sm:mb-4 text-xl sm:text-2xl font-bold">Job Description</h2>
+              <p className="mb-6 sm:mb-8 text-sm sm:text-base text-gray-700 leading-relaxed">{job.description}</p>
 
-              <h2 className="mb-4 text-2xl font-bold">Requirements</h2>
-              <ul className="pl-5 mb-8 text-gray-700 list-disc">
-                <li className="mb-2">Bachelor's degree in Computer Science or related field</li>
-                <li className="mb-2">3+ years of experience with modern JavaScript frameworks</li>
-                <li className="mb-2">Strong understanding of web technologies and RESTful APIs</li>
-                <li className="mb-2">Experience with database design and optimization</li>
-                <li className="mb-2">Excellent problem-solving and communication skills</li>
+              <h2 className="mb-3 sm:mb-4 text-xl sm:text-2xl font-bold">Requirements</h2>
+              <ul className="pl-4 sm:pl-5 mb-6 sm:mb-8 text-sm sm:text-base text-gray-700 list-disc space-y-1 sm:space-y-2">
+                <li>Bachelor's degree in Computer Science or related field</li>
+                <li>3+ years of experience with modern JavaScript frameworks</li>
+                <li>Strong understanding of web technologies and RESTful APIs</li>
+                <li>Experience with database design and optimization</li>
+                <li>Excellent problem-solving and communication skills</li>
               </ul>
 
-              <h2 className="mb-4 text-2xl font-bold">Responsibilities</h2>
-              <ul className="pl-5 text-gray-700 list-disc">
-                <li className="mb-2">Develop and maintain web applications</li>
-                <li className="mb-2">Collaborate with cross-functional teams</li>
-                <li className="mb-2">Implement responsive design and ensure cross-browser compatibility</li>
-                <li className="mb-2">Optimize applications for maximum speed and scalability</li>
-                <li className="mb-2">Participate in code reviews and contribute to team knowledge sharing</li>
+              <h2 className="mb-3 sm:mb-4 text-xl sm:text-2xl font-bold">Responsibilities</h2>
+              <ul className="pl-4 sm:pl-5 text-sm sm:text-base text-gray-700 list-disc space-y-1 sm:space-y-2">
+                <li>Develop and maintain web applications</li>
+                <li>Collaborate with cross-functional teams</li>
+                <li>Implement responsive design and ensure cross-browser compatibility</li>
+                <li>Optimize applications for maximum speed and scalability</li>
+                <li>Participate in code reviews and contribute to team knowledge sharing</li>
               </ul>
             </div>
 
-            <div className="md:col-span-1">
-              <div className="p-6 rounded-lg bg-gray-50">
-                <h3 className="mb-4 text-xl font-semibold">Job Details</h3>
+            <div className="lg:col-span-1">
+              <div className="p-4 sm:p-6 rounded-lg bg-gray-50">
+                <h3 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold">Job Details</h3>
 
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500">Industry</p>
-                  <p className="font-medium">{job.industryName}</p>
+                <div className="mb-3 sm:mb-4">
+                  <p className="text-xs sm:text-sm text-gray-500">Industry</p>
+                  <p className="font-medium text-sm sm:text-base">{job.industryName}</p>
                 </div>
 
                 <div className="mb-4">

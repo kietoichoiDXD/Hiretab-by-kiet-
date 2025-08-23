@@ -446,23 +446,25 @@ export default function ManageCandidates() {
   }
 
   return (
-    <div className="h-screen bg-gray-50 font-['Inter',system-ui,sans-serif]">
+    <div className="min-h-screen bg-gray-50 font-['Inter',system-ui,sans-serif]">
       <div className="bg-gray-50 h-full">
-        <DashboardHeader
-          jobName="All Candidates Management"
-          candidatesCount={candidates.length}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          showFilterPanel={showFilterPanel}
-          setShowFilterPanel={setShowFilterPanel}
-          filtersCount={filters.length}
-          sortConfig={sortConfig}
-          setSortConfig={setSortConfig}
-          selectedCandidatesCount={selectedCandidates.size}
-          onSendEmail={handleSendEmail}
-        />
+        <div className="px-3 sm:px-4 lg:px-6">
+          <DashboardHeader
+            jobName="All Candidates Management"
+            candidatesCount={candidates.length}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            showFilterPanel={showFilterPanel}
+            setShowFilterPanel={setShowFilterPanel}
+            filtersCount={filters.length}
+            sortConfig={sortConfig}
+            setSortConfig={setSortConfig}
+            selectedCandidatesCount={selectedCandidates.size}
+            onSendEmail={handleSendEmail}
+          />
+        </div>
 
-        <div className="px-3 py-2">
+        <div className="px-3 sm:px-4 lg:px-6 py-2">
           <BulkActionsBar
             selectedCount={selectedCandidates.size}
             availableTransitions={availableTransitions}

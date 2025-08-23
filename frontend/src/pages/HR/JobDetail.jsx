@@ -110,43 +110,43 @@ export default function JobDetail() {
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-700 via-blue-600/80 to-blue-400/80 z-10" />
         <div
-          className="relative bg-cover bg-center h-[340px] md:h-[420px]"
+          className="relative bg-cover bg-center h-[280px] sm:h-[320px] md:h-[380px] lg:h-[420px]"
           style={{
             backgroundImage:
               "url('https://github.com/meishenry/HireNova/blob/main/%E1%BB%A8ng%20Vi%C3%AAn/M%C3%B4%20t%E1%BA%A3%20c%C3%B4ng%20vi%E1%BB%87c%20khi%20ch%C6%B0a%20apply%20(%E1%BB%A9ng%20vi%C3%AAn)/images/main-image.jpg?raw=true')",
           }}
         >
           {/* Navigation */}
-          <div className="relative z-20 p-6 flex items-center justify-between">
+          <div className="relative z-20 p-4 sm:p-6 flex items-center justify-between">
             <button
-              className="flex items-center text-white hover:text-blue-100 transition text-lg font-medium bg-blue-700/40 px-4 py-2 rounded-lg shadow backdrop-blur-sm"
+              className="flex items-center text-white hover:text-blue-100 transition text-sm sm:text-base lg:text-lg font-medium bg-blue-700/40 px-3 sm:px-4 py-2 rounded-lg shadow backdrop-blur-sm"
               onClick={() => navigate(-1)}
             >
-              <ArrowLeft className="mr-2 h-5 w-5" />
-              <span>Back to Jobs</span>
+              <ArrowLeft className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Back to Jobs</span>
+              <span className="sm:hidden">Back</span>
             </button>
-          </div>
 
-          {/* Apply Button */}
-          <div className="absolute z-20 top-6 right-6">
+            {/* Apply Button - moved to navigation bar for better mobile layout */}
             <button
-              className="bg-white text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition font-medium shadow-lg"
+              className="bg-white text-blue-600 px-3 sm:px-4 lg:px-6 py-2 rounded-lg hover:bg-blue-50 transition font-medium shadow-lg text-sm sm:text-base"
               onClick={() => navigate(`/hr/job-dashboard/${job?.id}`)}
             >
-              View List Candidate
+              <span className="hidden sm:inline">View List Candidate</span>
+              <span className="sm:hidden">Candidates</span>
             </button>
           </div>
 
           {/* Job Title and Info */}
-          <div className="relative z-20 flex flex-col justify-center h-full px-6 pb-10 md:pb-16 max-w-6xl mx-auto">
-            <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-6 drop-shadow-lg">{job.title}</h1>
-            <div className="flex flex-wrap items-center gap-3 text-white text-lg font-medium mb-4">
-              <span className="bg-blue-900/60 px-4 py-2 rounded-full text-base backdrop-blur-sm flex items-center gap-2">
-                <MapPin size={16} />
+          <div className="relative z-20 flex flex-col justify-center h-full px-4 sm:px-6 pb-8 sm:pb-12 lg:pb-16 max-w-6xl mx-auto">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-4 sm:mb-6 drop-shadow-lg leading-tight">{job.title}</h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-white text-sm sm:text-base lg:text-lg font-medium mb-3 sm:mb-4">
+              <span className="bg-blue-900/60 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm lg:text-base backdrop-blur-sm flex items-center gap-1 sm:gap-2">
+                <MapPin size={14} className="sm:w-4 sm:h-4" />
                 {job.location}
               </span>
-              <span className="bg-blue-900/60 px-4 py-2 rounded-full text-base backdrop-blur-sm flex items-center gap-2">
-                <Briefcase size={16} />
+              <span className="bg-blue-900/60 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm lg:text-base backdrop-blur-sm flex items-center gap-1 sm:gap-2">
+                <Briefcase size={14} className="sm:w-4 sm:h-4" />
                 Full-Time
               </span>
               <span className="bg-blue-900/60 px-4 py-2 rounded-full text-base backdrop-blur-sm">
