@@ -48,6 +48,9 @@ jspm_packages/
 .env
 .env.test
 
+# Local error dumps
+error.txt
+
 # FuseBox cache
 .fusebox/
 

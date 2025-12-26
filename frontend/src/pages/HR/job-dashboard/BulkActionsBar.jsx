@@ -9,6 +9,7 @@ export default function BulkActionsBar({
   selectedCount,
   availableTransitions,
   onBulkStatusUpdate,
+  onBulkScan,
   onClearSelection,
   isLoading,
 }) {
@@ -39,6 +40,17 @@ export default function BulkActionsBar({
             </span>
           </div>
           <div className="flex items-center space-x-2">
+            {onBulkScan && (
+              <button
+                type="button"
+                onClick={onBulkScan}
+                disabled={isLoading}
+                className="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Run AI scan for selected CVs"
+              >
+                AI Scan
+              </button>
+            )}
             {availableTransitions.map((status) => (
               <button
                 key={status}
