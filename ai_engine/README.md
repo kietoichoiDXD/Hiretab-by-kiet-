@@ -75,4 +75,74 @@ Output (stringified JSON):
     }
   ]
 }
+
+## n8n + MCP + LangGraph (How it links together)
+
+### High-level flow
+
+1) **n8n** receives an event (new candidate / new application / HR click “scan”).
+2) n8n prepares inputs (`cv_text`, `job_criteria`).
+3) n8n calls the **MCP tool** `analyze_cv_logic(...)` exposed by `mcp_server.py`.
+4) MCP tool runs the **LangGraph** app (`app.ainvoke(state)`), which:
+   - fans out into agents (`loyalty`, `star`, `ats`, `edu`)
+   - fans in to `cross_check` to detect mismatches
+   - aggregates a final report in `aggregator`
+5) n8n parses the JSON output, routes by severity, stores results, notifies HR.
+
+### What n8n nodes typically look like
+
+- **Trigger**: Webhook / Database trigger / IMAP email trigger
+- **Extract CV text**:
+  - If CV is already text: skip
+  - If CV is PDF: use your existing extractor step (or a custom service)
+- **Set / Code node**: build `job_criteria` from Job Description (JD)
+- **MCP node** (recommended): call tool `analyze_cv_logic`
+- **Code node**: `JSON.parse()` the tool output string
+- **IF node**: route by `cross_check_results[*].severity`
+- **DB node / HTTP Request**: store report back to your backend
+- **Slack/Email**: notify HR when `High`/`Critical`
+
+### Suggested n8n payload mapping
+
+Input to tool:
+
+```json
+{
+  "cv_text": "(string)",
+  "job_criteria": {
+    "title": "Senior Backend Engineer",
+    "level": "Senior",
+    "min_years_exp": 3,
+    "required_skills": ["python", "aws", "microservices"],
+    "description_keywords": ["distributed", "scalability", "ci/cd"]
+  }
+}
+```
+
+Tool output is a JSON **string**. In n8n, parse it in a Code node:
+
+```js
+// n8n Code node (JavaScript)
+const raw = $json["result"]; // depends on your MCP node output field
+const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+return [{ json: parsed }];
+```
+
+### How LangGraph state maps to the tool
+
+The MCP tool constructs a LangGraph `state` with:
+
+- `cv_text`: candidate CV text
+- `job_criteria`: the JD requirements used by agents and cross-check
+- `agent_outputs`: agent partial outputs (merged dict)
+- `cross_check_results`: list of findings (merged list)
+
+### Handling & operational tips
+
+- **No secrets in git**: keep all API keys in n8n credentials or environment variables; never commit `.env`.
+- **Timeouts**: if n8n has a hard timeout, prefer running the MCP server close to n8n (same machine/VPC) and keep CV text sizes reasonable.
+- **Retries**: if the MCP call fails transiently, retry at the n8n node level (small backoff).
+- **Batch scan**: use **Split in Batches** in n8n and call `analyze_cv_logic` per candidate; merge results at the end.
+- **Severity routing**: treat any `Critical` as immediate notify + manual review; `High` as review queue; `Medium/Low` as informational.
+
 ```
