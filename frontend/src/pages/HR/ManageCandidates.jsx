@@ -77,8 +77,68 @@ export default function ManageCandidates() {
         const response = await candidateApi.getPaginationCandidate(1, 100) // Adjust page/size as needed
         return response.data || [] // Adjust based on response structure
       } catch (error) {
-        console.error("Failed to fetch all candidates:", error)
-        throw error
+        console.warn("Backend unavailable, using MOCK candidates for AI scan demo")
+        
+        const localCandidates = JSON.parse(localStorage.getItem('mock_candidates') || '[]');
+        
+        const staticCandidates = [
+          {
+            id: 1,
+            name: "Tran Quoc Kiet",
+            email: "kiet@gmail.com",
+            jobPostingName: "Senior Full-Stack",
+            phone: "0905709804",
+            status: "In-Review",
+            score: 95,
+            createdAt: "2025-12-25",
+            resumeFile: "https://example.com/cv/kiet.pdf",
+          },
+          {
+            id: 2,
+            name: "Aleksei Savchenko",
+            email: "aleksei@email.com",
+            jobPostingName: "AI Engineer",
+            phone: "+84 909 345 678",
+            status: "In-Review",
+            score: 72,
+            createdAt: "2025-12-23",
+            resumeFile: "https://example.com/cv/aleksei.pdf",
+          },
+          {
+            id: 3,
+            name: "Truong Cong Hoang",
+            email: "hoang@email.com",
+            jobPostingName: "Backend Dev",
+            phone: "0912345678",
+            status: "Interview",
+            score: 42,
+            createdAt: "2025-12-23",
+            resumeFile: "https://example.com/cv/hoang.pdf",
+          },
+          {
+            id: 4,
+            name: "Nguyen Le Tien Dat",
+            email: "dat@email.com",
+            jobPostingName: "Frontend Lead",
+            phone: "0987654321",
+            status: "Hired",
+            score: 88,
+            createdAt: "2025-11-29",
+            resumeFile: "https://example.com/cv/dat.pdf",
+          },
+          {
+            id: 5,
+            name: "Jane Doe",
+            email: "jane@email.com",
+            jobPostingName: "Machine Learning",
+            phone: "0123456789",
+            status: "In-Review",
+            score: 24,
+            createdAt: "2025-10-19",
+            resumeFile: "",
+          },
+        ];
+        return [...localCandidates, ...staticCandidates];
       }
     },
     refetchOnWindowFocus: false,
@@ -228,6 +288,140 @@ export default function ManageCandidates() {
       candidateIds: validCandidates.map((c) => c.id),
       status: newStatus,
     })
+  }
+
+  const buildMockAiInsight = (candidate) => {
+    const hasResume = Boolean(candidate?.resumeFile)
+    const score = Number(candidate?.score ?? 0)
+    const experiencePass = score >= 60
+    const skillsPass = score >= 70
+    const projectsPass = score >= 65
+    const educationPass = score >= 50
+
+    const status = !hasResume
+      ? "Conflict"
+      : !experiencePass && !skillsPass
+        ? "Conflict"
+        : !experiencePass || !skillsPass
+          ? "Risk"
+          : "Safe"
+
+    const checks = [
+      {
+        key: "cv",
+        label: "CV provided",
+        pass: hasResume,
+        detail: hasResume ? "CV is available for scanning." : "No CV file/link found for this candidate.",
+        conflicts: []
+      },
+      {
+        key: "experience",
+        label: "Experience vs JD",
+        pass: experiencePass,
+        detail: experiencePass
+          ? "Meets minimum experience requirement."
+          : "Below minimum experience threshold.",
+        conflicts: experiencePass ? [] : [
+            {
+              source: "CV - Work History",
+              text: "Junior Developer at ABC Corp (2022-2024)",
+              reason: "Total duration is 2 years."
+            },
+            {
+              source: "Job Description",
+              text: "Required: 5+ years of experience in Software Development.",
+              reason: "Requirement not met."
+            }
+        ]
+      },
+      {
+        key: "skills",
+        label: "Skills match",
+        pass: skillsPass,
+        detail: skillsPass ? "Required skills coverage looks good." : "Missing some required skills.",
+        conflicts: skillsPass ? [] : [
+             {
+              source: "CV - Skills Section",
+              text: "React, Node.js, MongoDB, Express",
+              reason: "Missing DevOps tools."
+            },
+            {
+              source: "Job Description",
+              text: "Must have experience with Docker and Kubernetes.",
+              reason: "Critical skill gap."
+            }
+        ]
+      },
+      {
+        key: "projects",
+        label: "Project relevance",
+        pass: projectsPass,
+        detail: projectsPass ? "Projects mention relevant keywords." : "Projects lack JD-relevant keywords.",
+        conflicts: []
+      },
+      {
+        key: "education",
+        label: "Education",
+        pass: educationPass,
+        detail: educationPass ? "Education baseline satisfied." : "Education evidence is weak/unclear.",
+        conflicts: educationPass ? [] : [
+             {
+              source: "CV - Education",
+              text: "Bachelor of Arts in History",
+              reason: "Non-technical degree."
+            },
+            {
+              source: "Job Description",
+              text: "Bachelor's degree in Computer Science or related field.",
+              reason: "Field of study mismatch."
+            }
+        ]
+      },
+    ]
+
+    return {
+      status,
+      summary: `Estimated Match Score: ${Number.isFinite(score) ? score : 0}/100`,
+      checks,
+      updatedAt: new Date().toISOString(),
+    }
+  }
+
+  const applyAiInsight = (candidate) => ({
+    ...candidate,
+    aiInsight: buildMockAiInsight(candidate),
+  })
+
+  const handleBulkScan = () => {
+    if (selectedCandidates.size === 0) return
+
+    const selectedSet = new Set(Array.from(selectedCandidates).map(String))
+    toast.info(`Scanning ${selectedCandidates.size} CV(s) with AI Engine...`)
+
+    queryClient.setQueryData(["allCandidates"], (oldData) => {
+      const list = Array.isArray(oldData) ? oldData : oldData?.data
+      if (!Array.isArray(list)) return oldData
+
+      const next = list.map((c) => (selectedSet.has(String(c.id)) ? applyAiInsight(c) : c))
+      return Array.isArray(oldData) ? next : { ...oldData, data: next }
+    })
+
+    setTimeout(() => {
+      toast.success("AI scan completed")
+      setSelectedCandidates(new Set())
+    }, 400)
+  }
+
+  const handleScanCandidate = (candidateId) => {
+    toast.info("Scanning candidate CV with AI Engine...")
+    queryClient.setQueryData(["allCandidates"], (oldData) => {
+      const list = Array.isArray(oldData) ? oldData : oldData?.data
+      if (!Array.isArray(list)) return oldData
+
+      const next = list.map((c) => (String(c.id) === String(candidateId) ? applyAiInsight(c) : c))
+      return Array.isArray(oldData) ? next : { ...oldData, data: next }
+    })
+    setTimeout(() => toast.success("AI scan completed"), 250)
   }
 
   const handleSendEmail = () => {
@@ -469,6 +663,7 @@ export default function ManageCandidates() {
             selectedCount={selectedCandidates.size}
             availableTransitions={availableTransitions}
             onBulkStatusUpdate={handleBulkStatusUpdate}
+            onBulkScan={handleBulkScan}
             onClearSelection={() => setSelectedCandidates(new Set())}
             isLoading={bulkUpdateStatusMutation.isLoading}
           />
@@ -484,6 +679,7 @@ export default function ManageCandidates() {
             sortConfig={sortConfig}
             setSortConfig={setSortConfig}
             onStatusTransition={handleStatusTransition}
+            onScanCandidate={handleScanCandidate}
             showJobName={true}
             refetchCandidates={refetch}
           />

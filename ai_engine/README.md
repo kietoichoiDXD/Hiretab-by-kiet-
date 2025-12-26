@@ -29,27 +29,68 @@ pip install langgraph mcp streamlit pypdf
 
 ```powershell
 cd ai_engine
+# HireTab AI Engine — LangGraph + MCP + n8n (Scan CV chuẩn theo JD)
+
+Tài liệu này gộp toàn bộ: kiến trúc AI engine (LangGraph), cách chạy MCP server, cách nối n8n, best practices để scan CV “chuẩn” hơn, và 1 transcript để bạn thuyết trình/dạy lại.
+
+## 1) Tổng quan
+
+Mục tiêu: n8n điều phối workflow tuyển dụng; MCP là “cổng tool chuẩn”; LangGraph điều phối nhiều agent để scan CV theo **job criteria (JD)** và có **cross-check** giữa các agent.
+
+## 2) Kiến trúc trong repo
+
+- `graph.py`: định nghĩa LangGraph pipeline (fan-out agents → cross-check → aggregator)
+- `state.py`: schema state + merge strategy
+- `nodes/agents.py`: các agent (async node) tạo tín hiệu riêng
+- `nodes/cross_check.py`: luật đối chiếu/cảnh báo/mismatch
+- `mcp_server.py`: expose tool MCP để n8n gọi
+- `demo_ui.py`: Streamlit demo gọi `app.ainvoke(...)` trực tiếp
+
+### LangGraph flow (đang dùng)
+
+1) `setup`
+2) Fan-out: `loyalty`, `star`, `ats`, `edu`
+3) Fan-in: `cross_check`
+4) `aggregator` → `END`
+
+Điểm quan trọng: `job_criteria` là input giúp scan “chuẩn” theo từng job, thay vì report chung chung.
+
+## 3) Chạy local (Windows / PowerShell)
+
+### 3.1 Tạo venv + cài deps
+
+Chạy từ repo root `HireTab/`:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -U pip
+
+pip install langgraph mcp streamlit pypdf
+```
+
+### 3.2 Chạy MCP server (để n8n gọi)
+
+```powershell
+cd ai_engine
 python mcp_server.py
 ```
 
-This exposes MCP tool: `analyze_cv_logic(cv_text, job_criteria?)`.
-
-### 3) Run local demo UI
+### 3.3 Chạy demo UI
 
 ```powershell
 cd ai_engine
 streamlit run demo_ui.py
 ```
 
-## Tool I/O
+## 4) MCP tool: input/output (chuẩn để n8n map)
 
-### MCP tool: `analyze_cv_logic`
+Tool hiện có: `analyze_cv_logic(cv_text, job_criteria?)`
 
-Input:
-- `cv_text` (string)
-- `job_criteria` (optional object)
+### Input
 
-Example `job_criteria`:
+- `cv_text`: string
+- `job_criteria` (optional object):
 
 ```json
 {
@@ -61,88 +102,109 @@ Example `job_criteria`:
 }
 ```
 
-Output (stringified JSON):
+### Output
+
+Tool trả về **JSON string** (để n8n parse dễ):
 
 ```json
 {
-  "final_report": "Estimated Match Score: 75.0/100",
+  "final_report": "FINAL REPORT\n================\nNo issues found.",
   "cross_check_results": [
     {
       "action": "flag_mismatch",
       "logic_id": "LOW_SKILL_MATCH",
-      "reason": "...",
+      "reason": "Only matches 40% required skills...",
       "severity": "High"
     }
   ]
 }
-
-## n8n + MCP + LangGraph (How it links together)
-
-### High-level flow
-
-1) **n8n** receives an event (new candidate / new application / HR click “scan”).
-2) n8n prepares inputs (`cv_text`, `job_criteria`).
-3) n8n calls the **MCP tool** `analyze_cv_logic(...)` exposed by `mcp_server.py`.
-4) MCP tool runs the **LangGraph** app (`app.ainvoke(state)`), which:
-   - fans out into agents (`loyalty`, `star`, `ats`, `edu`)
-   - fans in to `cross_check` to detect mismatches
-   - aggregates a final report in `aggregator`
-5) n8n parses the JSON output, routes by severity, stores results, notifies HR.
-
-### What n8n nodes typically look like
-
-- **Trigger**: Webhook / Database trigger / IMAP email trigger
-- **Extract CV text**:
-  - If CV is already text: skip
-  - If CV is PDF: use your existing extractor step (or a custom service)
-- **Set / Code node**: build `job_criteria` from Job Description (JD)
-- **MCP node** (recommended): call tool `analyze_cv_logic`
-- **Code node**: `JSON.parse()` the tool output string
-- **IF node**: route by `cross_check_results[*].severity`
-- **DB node / HTTP Request**: store report back to your backend
-- **Slack/Email**: notify HR when `High`/`Critical`
-
-### Suggested n8n payload mapping
-
-Input to tool:
-
-```json
-{
-  "cv_text": "(string)",
-  "job_criteria": {
-    "title": "Senior Backend Engineer",
-    "level": "Senior",
-    "min_years_exp": 3,
-    "required_skills": ["python", "aws", "microservices"],
-    "description_keywords": ["distributed", "scalability", "ci/cd"]
-  }
-}
 ```
 
-Tool output is a JSON **string**. In n8n, parse it in a Code node:
+## 5) Nối n8n + MCP + LangGraph (luồng chuẩn)
+
+### 5.1 Luồng tổng thể
+
+1) n8n nhận trigger (ứng viên apply / HR bấm scan / cron batch)
+2) n8n lấy dữ liệu: CV + Job Description (JD)
+3) n8n chuẩn hoá:
+   - extract `cv_text`
+   - dựng `job_criteria`
+4) n8n gọi MCP tool `analyze_cv_logic`
+5) LangGraph chạy fan-out agents + cross-check
+6) n8n parse output và xử lý:
+   - lưu DB
+   - notify HR
+   - route theo severity
+
+### 5.2 Gợi ý workflow nodes trong n8n
+
+- **Trigger**: Webhook / DB Trigger / Email Trigger
+- **HTTP Request**: lấy candidate + job detail (JD)
+- **Extract CV text**:
+  - nếu CV là PDF: dùng node/service của bạn để PDF → text
+- **Code/Set**: build `job_criteria`
+- **MCP node**: call tool `analyze_cv_logic`
+- **Code node**: parse JSON string output
+- **IF / Switch**: phân luồng theo `severity`
+- **DB / HTTP Request**: lưu report, cập nhật candidate status
+- **Slack/Email**: chỉ notify khi High/Critical
+
+### 5.3 Code node để parse output
 
 ```js
-// n8n Code node (JavaScript)
-const raw = $json["result"]; // depends on your MCP node output field
-const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+// n8n Code node
+// Lưu ý: field output của MCP node có thể khác nhau theo node/connector.
+// Hãy thay $json["result"] bằng field thực tế bạn nhận được.
+
+const raw = $json["result"];
+const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
 return [{ json: parsed }];
 ```
 
-### How LangGraph state maps to the tool
+### 5.4 Routing theo severity (khuyến nghị)
 
-The MCP tool constructs a LangGraph `state` with:
+- Nếu có `Critical`: tạo task manual review + notify HR ngay
+- Nếu có `High`: đưa vào queue “Risk review”
+- Nếu chỉ `Medium/Low`: lưu insight, không spam notify
 
-- `cv_text`: candidate CV text
-- `job_criteria`: the JD requirements used by agents and cross-check
-- `agent_outputs`: agent partial outputs (merged dict)
-- `cross_check_results`: list of findings (merged list)
+## 6) Làm scan “chuẩn hơn” (best practices)
 
-### Handling & operational tips
+### 6.1 Chuẩn hoá CV text
 
-- **No secrets in git**: keep all API keys in n8n credentials or environment variables; never commit `.env`.
-- **Timeouts**: if n8n has a hard timeout, prefer running the MCP server close to n8n (same machine/VPC) and keep CV text sizes reasonable.
-- **Retries**: if the MCP call fails transiently, retry at the n8n node level (small backoff).
-- **Batch scan**: use **Split in Batches** in n8n and call `analyze_cv_logic` per candidate; merge results at the end.
-- **Severity routing**: treat any `Critical` as immediate notify + manual review; `High` as review queue; `Medium/Low` as informational.
+- Remove header/footer lặp lại của PDF
+- Giữ mốc thời gian (YYYY, ranges) vì logic exp phụ thuộc
+- Normalize text: lowercase/strip extra whitespace (n8n có thể làm trước)
 
-```
+### 6.2 Chuẩn hoá job_criteria
+
+- `required_skills`: lowercase, thống nhất alias (js/javascript, node/nodejs)
+- `description_keywords`: tránh từ quá chung; chọn keyword phân biệt domain/tech
+- `min_years_exp` + `level`: dùng nhất quán để cross-check seniority
+
+### 6.3 Vận hành trong n8n
+
+- **Batch scan**: Split in Batches → gọi tool từng CV → merge
+- **Retry**: retry với backoff khi MCP call lỗi transient
+- **Audit**: lưu raw output JSON + timestamp + candidateId/jobId
+- **Timeout**: đặt timeout hợp lý; chạy MCP server gần n8n (cùng máy/VPC)
+
+### 6.4 Bảo mật
+
+- API keys chỉ để trong n8n credentials / env vars
+- Không commit `.env` hoặc secret vào git
+
+## 7) Transcript (để thuyết trình/dạy lại)
+
+Chào mọi người, hôm nay mình nói nhanh về cách kết hợp **n8n + MCP + LangGraph** để scan CV theo JD chính xác hơn.
+
+Đầu tiên, n8n là workflow orchestrator: nhận trigger khi ứng viên apply, lấy CV và JD từ backend, gọi AI engine, lưu kết quả, rồi gửi thông báo cho HR.
+
+MCP là chuẩn “tool interface”: thay vì gọi ad-hoc, mình expose engine thành tool `analyze_cv_logic`. Nhờ vậy n8n gọi tool với input/output rõ ràng, dễ kiểm soát.
+
+LangGraph là phần giúp scan CV có cấu trúc multi-agent: mỗi agent tập trung vào một góc nhìn như kinh nghiệm, kỹ năng, dự án, học vấn. Sau đó node cross-check đối chiếu để phát hiện mismatch như thiếu năm kinh nghiệm, skill match thấp, hoặc level Senior nhưng years exp chưa đủ.
+
+Luồng chuẩn là: n8n nhận event → chuẩn hoá `cv_text` và `job_criteria` → gọi MCP tool → LangGraph chạy fan-out agents và cross-check → trả về `final_report` và `cross_check_results` → n8n parse và route theo severity.
+
+Điểm làm scan “chuẩn” hơn nằm ở chỗ criteria-driven: output không còn chung chung, mà phụ thuộc vào JD; đồng thời có cross-check giảm rủi ro bỏ sót hoặc mâu thuẫn.
+
+Cuối cùng, n8n giúp vận hành: batch scan, retry, audit log, và chỉ notify HR khi High/Critical để tránh spam.
