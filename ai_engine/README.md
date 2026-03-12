@@ -193,18 +193,3 @@ return [{ json: parsed }];
 - API keys chỉ để trong n8n credentials / env vars
 - Không commit `.env` hoặc secret vào git
 
-## 7) Transcript (để thuyết trình/dạy lại)
-
-Chào mọi người, hôm nay mình nói nhanh về cách kết hợp **n8n + MCP + LangGraph** để scan CV theo JD chính xác hơn.
-
-Đầu tiên, n8n là workflow orchestrator: nhận trigger khi ứng viên apply, lấy CV và JD từ backend, gọi AI engine, lưu kết quả, rồi gửi thông báo cho HR.
-
-MCP là chuẩn “tool interface”: thay vì gọi ad-hoc, mình expose engine thành tool `analyze_cv_logic`. Nhờ vậy n8n gọi tool với input/output rõ ràng, dễ kiểm soát.
-
-LangGraph là phần giúp scan CV có cấu trúc multi-agent: mỗi agent tập trung vào một góc nhìn như kinh nghiệm, kỹ năng, dự án, học vấn. Sau đó node cross-check đối chiếu để phát hiện mismatch như thiếu năm kinh nghiệm, skill match thấp, hoặc level Senior nhưng years exp chưa đủ.
-
-Luồng chuẩn là: n8n nhận event → chuẩn hoá `cv_text` và `job_criteria` → gọi MCP tool → LangGraph chạy fan-out agents và cross-check → trả về `final_report` và `cross_check_results` → n8n parse và route theo severity.
-
-Điểm làm scan “chuẩn” hơn nằm ở chỗ criteria-driven: output không còn chung chung, mà phụ thuộc vào JD; đồng thời có cross-check giảm rủi ro bỏ sót hoặc mâu thuẫn.
-
-Cuối cùng, n8n giúp vận hành: batch scan, retry, audit log, và chỉ notify HR khi High/Critical để tránh spam.
