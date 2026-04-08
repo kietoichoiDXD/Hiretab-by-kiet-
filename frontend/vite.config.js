@@ -12,6 +12,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
+      'wawa-lipsync': resolve(__dirname, './src/lib/wawa-lipsync'),
     },
   },
 });

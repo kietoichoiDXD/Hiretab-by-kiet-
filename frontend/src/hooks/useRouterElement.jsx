@@ -14,7 +14,9 @@ import JobDetailHR from '@/pages/HR/JobDetail'
 import ProtectedRoute from '@/components/landing/ProtectedRoute'
 import ManageCandidates from '@/pages/HR/ManageCandidates'
 import HRDashboard from '@/pages/HR/Dashboard/Hr_Dashboard'
-import CreateResume from '@/UV/CreateResume'  
+import CreateResume from '@/UV/CreateResume'
+import AIInterview from '@/features/ai-interview/AIInterview'
+
 export default function useRoutesElements() {
   const location = useLocation()
 
@@ -22,6 +24,7 @@ export default function useRoutesElements() {
     { path: path.home, element: <HomePage /> },
     { path: path.login, element: <LoginPage /> },
     { path: path.register, element: <Register /> },
+    { path: path.ai_interview, element: <AIInterview /> },
     // {
     //   path: path.admin.dashboard,
     //   element: (

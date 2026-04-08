@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { candidateApi } from "@/core/services/candidate.service"
 import { toast, Toaster } from "react-hot-toast"
 import { jwtDecode } from "jwt-decode"
@@ -23,6 +24,7 @@ const ModalFormCandidate = ({
     jobDesRate,
     jobDes,
 }) => {
+    const navigate = useNavigate()
     const [userId, setUserId] = useState("")
     const [formData, setFormData] = useState({
         fullName: "",
@@ -177,9 +179,36 @@ const ModalFormCandidate = ({
             }
 
             if (response.status >= 200 && response.status < 300) {
+                const autoInterviewContext = {
+                    candidate: {
+                        name: fullName.trim(),
+                        email: email.trim(),
+                        phone: phoneNumber.trim(),
+                        currentJobTitle: formData.currentJobTitle.trim(),
+                        linkedinUrl: formData.linkedinUrl.trim(),
+                        portfolioUrl: formData.portfolioUrl.trim(),
+                    },
+                    job: {
+                        id: jobId,
+                        title: jobTitle,
+                        location: jobLocation,
+                        level: jobLevel,
+                        description: jobDes,
+                        descriptionRate: jobDesRate,
+                    },
+                    analysis: matchingResult,
+                    submittedAt: new Date().toISOString(),
+                }
+
+                sessionStorage.setItem(
+                    "hiretab-auto-interview-context",
+                    JSON.stringify(autoInterviewContext)
+                )
+
                 toast.success("Application submitted successfully!")
                 onSubmit({ ...formData, file })
                 onClose()
+                navigate(path.ai_interview, { replace: true })
                 resetForm()
             } else {
                 throw new Error(`HTTP error! status: ${response.status}`)
