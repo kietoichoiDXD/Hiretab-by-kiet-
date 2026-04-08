@@ -5,13 +5,14 @@ export const path = {
   forgotPassword: '/forgot-password',
   blog: '/blog',
   create_resume: '/create-resume',
+  ai_interview: '/ai-interview',
   admin: {
     dashboard: '/admin/dashboard'
   },
   candidate: {
     job: '/candidate/job',
     jobDetail: '/candidate/job/:id',
-    
+
   },
   hr: {
     job_posting: '/hr/job-posting',
