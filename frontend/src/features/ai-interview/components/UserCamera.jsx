@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 
-export const UserCamera = () => {
+export const UserCamera = ({ onStatusChange }) => {
     const [stream, setStream] = useState(null);
     const [isActive, setIsActive] = useState(false);
     const [error, setError] = useState("");
@@ -78,6 +78,7 @@ export const UserCamera = () => {
 
             setPermissionStatus("granted");
             setIsRequestingPermission(false);
+            onStatusChange?.({ type: 'camera_permission_granted', status: 'granted' });
 
             // Now start the actual camera
             startCamera();
@@ -88,12 +89,16 @@ export const UserCamera = () => {
             if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
                 setPermissionStatus("denied");
                 setError("Camera permission denied. Please allow camera access in your browser settings.");
+                onStatusChange?.({ type: 'camera_permission_denied', status: 'denied', message: err.message });
             } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
                 setError("No camera found. Please connect a camera device.");
+                onStatusChange?.({ type: 'camera_not_found', status: 'error', message: err.message });
             } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
                 setError("Camera is already in use by another application.");
+                onStatusChange?.({ type: 'camera_in_use', status: 'error', message: err.message });
             } else {
                 setError(`Camera error: ${err.message}`);
+                onStatusChange?.({ type: 'camera_error', status: 'error', message: err.message });
             }
             console.error("Camera permission error:", err);
         }
@@ -115,6 +120,7 @@ export const UserCamera = () => {
 
             setStream(mediaStream);
             setIsActive(true);
+            onStatusChange?.({ type: 'camera_active', status: 'active', size: cameraSize, position: cameraPosition });
 
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream;
@@ -138,6 +144,7 @@ export const UserCamera = () => {
             stream.getTracks().forEach(track => track.stop());
             setStream(null);
             setIsActive(false);
+            onStatusChange?.({ type: 'camera_stopped', status: 'inactive' });
         }
     };
 
@@ -145,8 +152,10 @@ export const UserCamera = () => {
     const toggleCamera = () => {
         setCameraEnabled(!cameraEnabled);
         if (cameraEnabled) {
+            onStatusChange?.({ type: 'camera_disabled', status: 'disabled' });
             stopCamera();
         } else {
+            onStatusChange?.({ type: 'camera_enabled', status: 'enabled' });
             if (permissionStatus === "granted") {
                 startCamera();
             } else {

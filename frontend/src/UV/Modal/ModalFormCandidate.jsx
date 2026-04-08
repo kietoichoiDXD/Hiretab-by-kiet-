@@ -12,6 +12,7 @@ import { FileUploadSection } from "./AnalysisCV/FileUploadSection"
 import { CVAnalysisResult } from "./AnalysisCV/CVAnalysisResult"
 import { validatePdfFile, convertFileToBase64 } from "./AnalysisCV/utils/fileUtils"
 import { analyzeWithGemini } from "./AnalysisCV/utils/geminiService"
+import { interviewApi } from "@/core/services/interview.service"
 
 const ModalFormCandidate = ({
     isOpen,
@@ -178,15 +179,41 @@ const ModalFormCandidate = ({
                     submittedAt: new Date().toISOString(),
                 }
 
-                sessionStorage.setItem(
-                    "hiretab-auto-interview-context",
-                    JSON.stringify(autoInterviewContext)
-                )
+                let interviewSession = null
+
+                try {
+                    interviewSession = await interviewApi.createSessionFromResume({
+                        file,
+                        candidate: autoInterviewContext.candidate,
+                        job: autoInterviewContext.job,
+                        analysis: matchingResult || {},
+                    })
+
+                    sessionStorage.setItem(
+                        "hiretab-auto-interview-context",
+                        JSON.stringify({
+                            ...autoInterviewContext,
+                            sessionId: interviewSession?.sessionId || null,
+                            plan: interviewSession?.plan || null,
+                        })
+                    )
+                } catch (interviewError) {
+                    console.warn("Server interview session creation failed, falling back to local handoff:", interviewError)
+                    sessionStorage.setItem(
+                        "hiretab-auto-interview-context",
+                        JSON.stringify(autoInterviewContext)
+                    )
+                }
 
                 toast.success("Application submitted successfully!")
                 onSubmit({ ...formData, file })
                 onClose()
-                navigate(path.ai_interview, { replace: true })
+                navigate(
+                    interviewSession?.sessionId
+                        ? `${path.ai_interview}?sessionId=${interviewSession.sessionId}`
+                        : path.ai_interview,
+                    { replace: true }
+                )
                 resetForm()
             } else {
                 throw new Error(`HTTP error! status: ${response.status}`)

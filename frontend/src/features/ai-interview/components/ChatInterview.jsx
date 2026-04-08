@@ -3,6 +3,8 @@ import { lipsyncManager } from '../App';
 import { VISEMES } from 'wawa-lipsync';
 import * as THREE from 'three';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { useLocation } from 'react-router-dom';
+import { interviewApi } from '@/core/services/interview.service';
 import Logo from './Logo';
 
 const AUTO_INTERVIEW_STORAGE_KEY = 'hiretab-auto-interview-context';
@@ -64,6 +66,17 @@ const buildInitialInterviewContext = () => {
 };
 
 const buildInitialMessages = context => {
+    if (context.openingMessage) {
+        return [
+            {
+                id: 1,
+                sender: 'ai',
+                text: context.openingMessage,
+                timestamp: new Date(),
+            }
+        ];
+    }
+
     if (!context.position) {
         return [
             {
@@ -94,6 +107,7 @@ const buildInitialMessages = context => {
 };
 
 const ChatInterview = () => {
+    const location = useLocation();
     const initialInterviewContext = buildInitialInterviewContext();
 
     // Chat states
@@ -112,6 +126,15 @@ const ChatInterview = () => {
     const [speechRate, setSpeechRate] = useState(0.9);
     const [speechPitch, setSpeechPitch] = useState(1.0);
     const [speechVolume, setSpeechVolume] = useState(1.0);
+    const [sessionId, setSessionId] = useState(() => {
+        if (typeof window === 'undefined') {
+            return initialInterviewContext.sessionId || '';
+        }
+
+        const urlSessionId = new URLSearchParams(window.location.search).get('sessionId');
+        const storedContext = getStoredAutoInterviewContext();
+        return urlSessionId || storedContext?.sessionId || '';
+    });
 
     // Refs
     const speechRecognitionRef = useRef(null);
@@ -119,6 +142,7 @@ const ChatInterview = () => {
     const speechUtteranceRef = useRef(null);
     const messagesEndRef = useRef(null);
     const fakeLipsyncRef = useRef(null);
+    const websocketRef = useRef(null);
 
     // Interview context state
     const [interviewContext, setInterviewContext] = useState(initialInterviewContext);
@@ -152,6 +176,149 @@ const ChatInterview = () => {
             speechSynthesis.removeEventListener('voiceschanged', updateVoices);
         };
     }, [selectedVoice]);
+
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const urlSessionId = searchParams.get('sessionId');
+
+        if (urlSessionId && urlSessionId !== sessionId) {
+            setSessionId(urlSessionId);
+        }
+    }, [location.search, sessionId]);
+
+    useEffect(() => {
+        if (!sessionId) {
+            return;
+        }
+
+        let cancelled = false;
+
+        const hydrateSession = async () => {
+            try {
+                const sessionData = await interviewApi.getSession(sessionId);
+
+                if (cancelled || !sessionData) {
+                    return;
+                }
+
+                const plan = sessionData.interview_plan || {};
+                const candidate = sessionData.candidate_snapshot || {};
+                const job = sessionData.job_snapshot || {};
+                const analysis = sessionData.analysis_snapshot || {};
+                const matchingScore =
+                    analysis?.final_matching_score ??
+                    analysis?.finalAssessment?.final_matching_score ??
+                    analysis?.score ??
+                    analysis?.matching_score ??
+                    '';
+
+                const hydratedContext = {
+                    candidateName: candidate.name || '',
+                    position: job.title || candidate.currentJobTitle || '',
+                    experience: matchingScore ? `${matchingScore}` : '',
+                    skills: Array.isArray(plan.strengths) ? plan.strengths.slice(0, 5) : [],
+                    keyGaps: Array.isArray(plan.gaps) ? plan.gaps.slice(0, 5) : [],
+                    currentTopic: 'introduction',
+                    sessionId,
+                    openingMessage: plan.openingMessage || '',
+                };
+
+                setInterviewContext(hydratedContext);
+
+                if (Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
+                    setMessages(
+                        sessionData.messages.map(message => ({
+                            id: message.id,
+                            sender: message.sender,
+                            text: message.text,
+                            timestamp: message.created_at ? new Date(message.created_at) : new Date(),
+                        }))
+                    );
+                } else {
+                    setMessages(buildInitialMessages(hydratedContext));
+                }
+            } catch (error) {
+                console.warn('Unable to hydrate interview session from backend:', error);
+            }
+        };
+
+        hydrateSession();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [sessionId]);
+
+    useEffect(() => {
+        if (!sessionId || typeof window === 'undefined' || typeof window.WebSocket === 'undefined') {
+            return undefined;
+        }
+
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socket = new WebSocket(`${wsProtocol}//${window.location.host}/interview-ws`);
+        websocketRef.current = socket;
+
+        socket.onopen = () => {
+            socket.send(JSON.stringify({
+                type: 'subscribe',
+                sessionId,
+            }));
+        };
+
+        socket.onmessage = event => {
+            try {
+                const payload = JSON.parse(event.data);
+
+                if (payload.type === 'session.completed' && payload.payload?.report?.score !== undefined) {
+                    setInterviewContext(prev => ({
+                        ...prev,
+                        currentTopic: 'completed',
+                    }));
+                }
+            } catch (error) {
+                console.warn('Unable to parse websocket payload:', error);
+            }
+        };
+
+        socket.onerror = error => {
+            console.warn('Interview websocket error:', error);
+        };
+
+        return () => {
+            socket.close();
+            websocketRef.current = null;
+        };
+    }, [sessionId]);
+
+    useEffect(() => {
+        if (!sessionId) {
+            return undefined;
+        }
+
+        const emitEvent = eventType => {
+            interviewApi.recordEvent(sessionId, {
+                eventType,
+                at: new Date().toISOString(),
+            }).catch(error => console.warn('Failed to record interview event:', error));
+        };
+
+        const onVisibilityChange = () => {
+            emitEvent(document.hidden ? 'tab-hidden' : 'tab-visible');
+        };
+
+        const onBlur = () => emitEvent('window-blur');
+        const onFocus = () => emitEvent('window-focus');
+
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        window.addEventListener('blur', onBlur);
+        window.addEventListener('focus', onFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+            window.removeEventListener('blur', onBlur);
+            window.removeEventListener('focus', onFocus);
+        };
+    }, [sessionId]);
 
     // Check Web Speech API support
     useEffect(() => {
@@ -295,6 +462,24 @@ const ChatInterview = () => {
         try {
             setIsProcessing(true);
 
+            if (sessionId) {
+                const backendResult = await interviewApi.sendTurn(sessionId, userMessage, {
+                    interviewContext,
+                    conversationHistory: messages.slice(-3).map(message => ({
+                        sender: message.sender,
+                        text: message.text,
+                    })),
+                });
+
+                if (backendResult?.aiMessage?.text) {
+                    return backendResult.aiMessage.text;
+                }
+
+                if (backendResult?.aiMessage?.message) {
+                    return backendResult.aiMessage.message;
+                }
+            }
+
             // Prepare interview context data
             // const webhookPayload = {
             //     userMessage: userMessage,
@@ -311,8 +496,8 @@ const ChatInterview = () => {
             // console.log('📤 Gửi yêu cầu đến backend:', webhookPayload);
 
             // Option 1: Dùng mock webhook (testing, không cần n8n)
-            const useMockWebhook = false; // ← Đổi thành false để dùng n8n thực
-            const useDirectN8n = true; // ← Đặt true để gọi N8N trực tiếp
+            const useMockWebhook = false;
+            const useDirectN8n = true;
 
             // Auto-detect backend URL
             let backendUrl;
@@ -621,6 +806,32 @@ const ChatInterview = () => {
         stopDirectVisemeUpdate();
     };
 
+    const finishInterview = async () => {
+        if (!sessionId) {
+            return;
+        }
+
+        try {
+            const result = await interviewApi.finishSession(sessionId);
+            const reportPayload = result?.reportPayload || {};
+            const finalScore = result?.report?.score ?? reportPayload.finalScore ?? interviewContext.experience ?? 0;
+
+            setInterviewContext(prev => ({
+                ...prev,
+                currentTopic: 'completed',
+            }));
+
+            setMessages(prev => [...prev, {
+                id: Date.now(),
+                sender: 'ai',
+                text: `Buổi phỏng vấn đã kết thúc. Điểm cuối cùng là ${finalScore}/100. Bạn có thể xem report trong backend session.`,
+                timestamp: new Date(),
+            }]);
+        } catch (error) {
+            console.warn('Unable to finish interview session:', error);
+        }
+    };
+
     return (
         <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
             {/* Chat Messages */}
@@ -779,6 +990,15 @@ const ChatInterview = () => {
                             className="px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
                         >
                             🔇
+                        </button>
+                    )}
+
+                    {sessionId && (
+                        <button
+                            onClick={finishInterview}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                        >
+                            ✅ Kết thúc
                         </button>
                     )}
                 </div>

@@ -6,6 +6,7 @@ import { AuthResolver } from './auth/auth.resolver';
 import { IndustryResolver } from './industries';
 import { CandidateResolver } from './candidate';
 import { JobResolver } from './job/job.resolver';
+import { InterviewResolver } from './interview';
 
 export const ModuleResolver = HandlerResolver
     .builder()
@@ -17,4 +18,5 @@ export const ModuleResolver = HandlerResolver
         IndustryResolver,
         CandidateResolver,
         JobResolver,
+        InterviewResolver,
     ]);
